@@ -1,0 +1,32 @@
+<.header>
+  Quiz <%= @quiz.id %>
+  <:subtitle>This is a quiz record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/quizs/#{@quiz}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit quiz</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Quiz"><%= @quiz.body %></:item>
+  <:item title="Image"><img src={@quiz.image} /></:item>
+  <:item title="Solution">
+    <span class="capitalize"><%= if @quiz.solution, do: "vero", else: "falso" %></span>
+  </:item>
+  <:item title="Translation"><%= @quiz.translation %></:item>
+  <:item title="Explanation"><%= @quiz.explanation %></:item>
+</.list>
+
+<.back navigate={~p"/quizs"}>Back to quizs</.back>
+
+<.modal :if={@live_action == :edit} id="quiz-modal" show on_cancel={JS.patch(~p"/quizs/#{@quiz}")}>
+  <.live_component
+    module={PentoWeb.QuizLive.FormComponent}
+    id={@quiz.id}
+    title={@page_title}
+    action={@live_action}
+    quiz={@quiz}
+    patch={~p"/quizs/#{@quiz}"}
+  />
+</.modal>

@@ -1,0 +1,90 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* This file is for your main application CSS */
+@layer components {
+  .poppins-light {
+    font-family: "Poppins", sans-serif;
+    font-weight: 300;
+    font-style: normal;
+  }
+
+  .poppins-regular {
+    font-family: "Poppins", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  .poppins-semibold {
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  .poppins-bold {
+    font-family: "Poppins", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+  }
+
+  .btn-clicked {
+    @apply poppins-bold font-bold bg-brand;
+  }
+
+  .btn-solution {
+    @apply poppins-bold font-bold bg-green-500;
+  }
+
+  .btn-quiz {
+    @apply flex rounded-full border-blue-900 border-2 justify-center items-center h-10 w-10;
+  }
+
+  .quiz-no {
+    @apply flex justify-center items-center p-1 bg-gray-200 text-gray-500
+    hover:cursor-pointer font-normal;
+  }
+
+  .hollow-dots-spinner,
+  .hollow-dots-spinner * {
+    box-sizing: border-box;
+  }
+
+  .hollow-dots-spinner {
+    height: 15px;
+    width: calc(30px * 3);
+  }
+
+  .hollow-dots-spinner .dot {
+    width: 15px;
+    height: 15px;
+    margin: 0 calc(15px / 2);
+    border: calc(15px / 5) solid #ff1d5e;
+    border-radius: 50%;
+    float: left;
+    transform: scale(0);
+    animation: hollow-dots-spinner-animation 1000ms ease infinite 0ms;
+  }
+
+  .hollow-dots-spinner .dot:nth-child(1) {
+    animation-delay: calc(300ms * 1);
+  }
+
+  .hollow-dots-spinner .dot:nth-child(2) {
+    animation-delay: calc(300ms * 2);
+  }
+
+  .hollow-dots-spinner .dot:nth-child(3) {
+    animation-delay: calc(300ms * 3);
+  }
+
+  @keyframes hollow-dots-spinner-animation {
+    50% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}

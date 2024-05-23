@@ -1,0 +1,128 @@
+<!--div class="bg-[#CFE5D6]"-->
+<div class="bg-gradient-to-tr from-[#f884b4] to-[#948fdd] opacity-80">
+  <img class="py-1 mx-auto" src={~p"/images/scheda-esame-2.jpg"} alt="Esame" />
+
+  <div class="flex justify-between px-2 py-1">
+    <%= for n <- 0..2 do %>
+      <a
+        phx-click="quiz_select"
+        phx-value-num={n * 10 + 1}
+        class={
+          if @current_num >= n * 10 + 1 and @current_num <= n * 10 + 10,
+            do: ~w(text-red-500 text-md w-1/4 quiz-no),
+            else: ~w( text-md w-1/4 quiz-no)
+        }
+      >
+        Domande <%= n * 10 + 1 %> to <%= n * 10 + 10 %>
+      </a>
+    <% end %>
+  </div>
+
+  <div class="flex justify-between px-2 py-1">
+    <%= for n <- (div(@current_num - 1, 10) * 10 + 1)..(div(@current_num - 1, 10) * 10 + 10) do %>
+      <a
+        phx-click="quiz_select"
+        phx-value-num={n}
+        class={
+          if @current_num == n,
+            do: ~w(text-red-500 text-md w-1/12 quiz-no),
+            else: ~w(text-md w-1/12 quiz-no)
+        }
+      >
+        <%= n %>
+      </a>
+    <% end %>
+  </div>
+
+  <div class="flex flex-wrap justify-between px-2 py-1">
+    <%= for n <- 1..length(@quizs) do %>
+      <a
+        class={
+          if @current_num == n,
+            do: ~w(text-red-500 text-sm quiz-no),
+            else: ~w(text-sm quiz-no)
+        }
+        phx-click="quiz_select"
+        phx-value-num={n}
+      >
+        <%= n %>
+      </a>
+    <% end %>
+  </div>
+
+  <%= if @switch_view do %>
+    <%= for quiz <- @quizs do %>
+      <.quiz_box quiz={quiz} quiz_id={quiz.num} answer={@answers[quiz.num]} final={@final} />
+    <% end %>
+  <% else %>
+    <.quiz_box quiz={@quiz} quiz_id={@quiz.num} answer={@answers[@quiz.num]} final={@final} />
+  <% end %>
+
+  <div class="grid grid-cols-3 mt-4">
+    <div class="flex flex-col col-span-1 items-center justify-between">
+      <%= if @count > 0 do %>
+        <h1 class="bg-white mx-2 px-4 poppins-light mb-2">Tempo in dispozione</h1>
+      <% else %>
+        <h1 class="bg-white mx-2 px-4 poppins-regular text-red-600 mb-2">Tempo scaduto!</h1>
+      <% end %>
+
+      <section>
+        <.icon name="hero-clock-solid" class="w-5 h-5" />
+        <span><%= format_timer(@count) %></span>
+      </section>
+    </div>
+
+    <div class="gap-3 col-span-2 mr-2 flex justify-end">
+      <.icon
+        name="hero-list-bullet-solid"
+        class="w-6 h-6 hover:cursor-pointer"
+        phx-click="switch_view"
+      />
+      <.icon
+        name="hero-backward-solid"
+        class="w-6 h-8 hover:cursor-pointer"
+        phx-click="quiz_prev"
+      />
+      <.icon name="hero-forward-solid" class="w-6 h-8 hover:cursor-pointer" phx-click="quiz_next" />
+    </div>
+  </div>
+
+  <div class="text-center pb-6">
+    <button
+      phx-click={
+        JS.push("quiz_explain")
+        |> JS.add_class("pointer-events-none", to: "btn-quiz")
+        |> show_modal("summary_result")
+      }
+      class="text-md bg-gray-50 font-normal shadow-sm px-10 py-4 font-Helvetica"
+    >
+      Correggi
+    </button>
+  </div>
+</div>
+
+<.modal id="summary_result">
+  <div>
+    <h1>Your score: <%= @final %></h1>
+    <%= if @final <= 0.9 * length(@quizs) do %>
+      <h1>Failed</h1>
+    <% else %>
+      <h1>Passed</h1>
+    <% end %>
+  </div>
+</.modal>
+
+<.modal id="translate_quiz">
+  <div class="flex flex-col justify-between">
+    <h1 class="poppins-regular py-1"><%= @quiz.body %></h1>
+    <img src={@quiz.image} alt="" class="w-1/4 mx-auto" />
+    <h1 class="py-10 poppins-light "><%= @translated %></h1>
+  </div>
+</.modal>
+
+<.modal id="play_audio">
+  <div class="flex flex-col justify-between">
+    <h1 class="poppins-regular py-1"><%= @quiz.body %></h1>
+    <audio controls src={@audio}></audio>
+  </div>
+</.modal>
