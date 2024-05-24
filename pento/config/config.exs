@@ -20,7 +20,12 @@ config :pento, PentoWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Pento.PubSub,
-  live_view: [signing_salt: "yh5KX/XJ"]
+  live_view: [signing_salt: "yh5KX/XJ"],
+  translate_url: "https://translate.terraprint.co/translate",
+  translate_api_key: "",
+  playht_url: "https://play.ht/api/v2/tts/stream",
+  playht_api_key: "8d684012667548f2a69d4f09e948f717",
+  playht_user_id: "5BRME4ccMoVDYLqfEHKSrqmhNN23"
 
 # Configures the mailer
 #

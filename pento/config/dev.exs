@@ -24,11 +24,6 @@ config :pento, PentoWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "4ODwEX2cWhy8wVmXd1di+pWNmAMtidJAw7fa4fxorykk9vLL/yNAaznyRepXtuB5",
-  lecto_url: "https://api.lecto.ai/v1/translate/text",
-  lecto_api_key: "D3E6V5Q-4W4MZJX-PYPQDYW-7XM7BMK",
-  playht_url: "https://play.ht/api/v2/tts/stream",
-  playht_api_key: "8d684012667548f2a69d4f09e948f717",
-  playht_user_id: "5BRME4ccMoVDYLqfEHKSrqmhNN23",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:pento, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:pento, ~w(--watch)]}

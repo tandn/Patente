@@ -119,16 +119,38 @@ defmodule PentoWeb.QuizLive do
 
   def handle_event("quiz_translate", _unsigned_params, socket) do
     send(self(), :run_translate_request)
-    socket = push_event(socket, "js-exec", %{to: "#my_spinner", attr: "data-plz-wait"})
+    socket = push_event(socket, "js-exec", %{to: "#my_spinner", attr: "data-wait"})
 
     {:noreply, socket}
   end
 
   def handle_event("quiz_audio", _unsigned_params, socket) do
-    send(self(), :run_audio_request)
-    socket = push_event(socket, "js-exec", %{to: "#my_spinner", attr: "data-plz-wait"})
+    quiz_id = socket.assigns.quiz.id
+    file_path = local_file_path(quiz_id)
 
-    {:noreply, socket}
+    if File.exists?(file_path) do
+      {:noreply, assign(socket, audio: ~p"/audio/#{audio_file_name(quiz_id)}")}
+    else
+      send(self(), :run_audio_request)
+      socket = push_event(socket, "js-exec", %{to: "#my_spinner", attr: "data-wait"})
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info(:run_audio_request, socket) do
+    audio = get_audio(socket.assigns.quiz.body)
+    quiz_id = socket.assigns.quiz.id
+    file_path = local_file_path(quiz_id)
+    socket = push_event(socket, "js-exec", %{to: "#my_spinner", attr: "audio-done"})
+
+    if audio do
+      File.mkdir_p!(Path.dirname(file_path))
+      File.write!(file_path, audio)
+      ## TODO
+      {:noreply, assign(socket, audio: ~p"/audio/#{audio_file_name(quiz_id)}")}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_info(:quiz_tick, socket) do
@@ -150,33 +172,26 @@ defmodule PentoWeb.QuizLive do
     {:noreply, assign(socket, translated: translated)}
   end
 
-  def handle_info(:run_audio_request, socket) do
-    audio = get_audio(socket.assigns.quiz.body)
-
-    socket = push_event(socket, "js-exec", %{to: "#my_spinner", attr: "audio-done"})
-    ## TODO
-    {:noreply, assign(socket, audio: "/mp3/path/file.mp3")}
-  end
-
   defp get_translated(text) do
-    url = PentoWeb.Endpoint.config(:lecto_url)
+    url = PentoWeb.Endpoint.config(:translate_url)
 
     headers = [
-      {"X-API-Key", PentoWeb.Endpoint.config(:lecto_api_key)},
+      {"X-API-Key", PentoWeb.Endpoint.config(:translate_api_key)},
       {"Content-Type", "application/json"},
       {"Accept", "application/json"}
     ]
 
-    body = Jason.encode!(%{texts: [text], to: ["en"], from: "it"})
+    body = Jason.encode!(%{q: text, source: "it", target: "en"})
 
     with {:ok, %HTTPoison.Response{status_code: 200, body: body}} <-
-           HTTPoison.post(url, body, headers),
-         {:ok, %{"translations" => [%{"translated" => [translated]}]}} <-
+           HTTPoison.post(url, body, headers) |> IO.inspect(),
+         {:ok, %{"translatedText" => translated}} <-
            Jason.decode(body) do
-      translated
+      String.capitalize(translated)
     else
-      _ ->
-        nil
+      err ->
+        IO.inspect(err)
+        "Comming soon"
     end
   end
 
@@ -223,4 +238,16 @@ defmodule PentoWeb.QuizLive do
 
   defp format_unit(u) when u < 10, do: "0#{u}"
   defp format_unit(u), do: u
+
+  defp audio_file_name(quiz_id) do
+    "quiz_#{quiz_id}.mp3"
+  end
+
+  def local_file_path(quiz_id) do
+    Application.app_dir(:pento, ["priv", "static", "audio", audio_file_name(quiz_id)])
+  end
+
+  def audio_url(quiz_id) do
+    unverified_path(PentoWeb.Endpoint, PentoWeb.Router, ~p"/audio/#{audio_file_name(quiz_id)}")
+  end
 end

@@ -120,9 +120,8 @@
   </div>
 </.modal>
 
-<.modal id="play_audio">
-  <div class="flex flex-col justify-between">
-    <h1 class="poppins-regular py-1"><%= @quiz.body %></h1>
-    <audio controls src={@audio}></audio>
-  </div>
-</.modal>
+<%= if @audio do %>
+  <audio controls autoplay hidden>
+    <source src={@audio} type="audio/mp3" />
+  </audio>
+<% end %>
