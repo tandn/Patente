@@ -50,7 +50,7 @@ defmodule Pento.Catalog do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_quiz(attrs \\ %{}) do
+  def create_quiz(attrs) do
     %Quiz{}
     |> Quiz.changeset(attrs)
     |> Repo.insert()

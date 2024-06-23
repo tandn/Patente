@@ -4,6 +4,7 @@ defmodule Pento.Catalog.Topic do
 
   schema "topics" do
     field :name, :string
+    has_many :quizs, Pento.Catalog.Quiz
 
     timestamps(type: :utc_datetime)
   end

@@ -1,52 +1,49 @@
 <!--div class="bg-[#CFE5D6]"-->
-<div class="bg-gradient-to-tr from-[#f884b4] to-[#948fdd] opacity-80">
+<div class="bg-[#9fcaad] shadow-md border">
   <img class="py-1 mx-auto" src={~p"/images/scheda-esame-2.jpg"} alt="Esame" />
 
   <div class="flex justify-between px-2 py-1">
     <%= for n <- 0..2 do %>
-      <a
-        phx-click="quiz_select"
-        phx-value-num={n * 10 + 1}
+      <.link
+        patch={~p"/quiz/?num=#{n * 10 + 1}"}
         class={
-          if @current_num >= n * 10 + 1 and @current_num <= n * 10 + 10,
-            do: ~w(text-red-500 text-md w-1/4 quiz-no),
-            else: ~w( text-md w-1/4 quiz-no)
+          if @quiz.num >= n * 10 + 1 and @quiz.num <= n * 10 + 10,
+            do: ~w(text-red-500 text-md w-1/4 quiz-no shadow-md),
+            else: ~w(text-md w-1/4 quiz-no shadow-md )
         }
       >
         Domande <%= n * 10 + 1 %> to <%= n * 10 + 10 %>
-      </a>
+      </.link>
     <% end %>
   </div>
 
   <div class="flex justify-between px-2 py-1">
-    <%= for n <- (div(@current_num - 1, 10) * 10 + 1)..(div(@current_num - 1, 10) * 10 + 10) do %>
-      <a
-        phx-click="quiz_select"
-        phx-value-num={n}
+    <%= for n <- (div(@quiz.num - 1, 10) * 10 + 1)..(div(@quiz.num - 1, 10) * 10 + 10) do %>
+      <.link
+        patch={~p"/quiz/?num=#{n}"}
         class={
-          if @current_num == n,
+          if @quiz.num == n,
             do: ~w(text-red-500 text-md w-1/12 quiz-no),
             else: ~w(text-md w-1/12 quiz-no)
         }
       >
         <%= n %>
-      </a>
+      </.link>
     <% end %>
   </div>
 
   <div class="flex flex-wrap justify-between px-2 py-1">
     <%= for n <- 1..length(@quizs) do %>
-      <a
+      <.link
         class={
-          if @current_num == n,
+          if @quiz.num == n,
             do: ~w(text-red-500 text-sm quiz-no),
             else: ~w(text-sm quiz-no)
         }
-        phx-click="quiz_select"
-        phx-value-num={n}
+        patch={~p"/quiz/?num=#{n}"}
       >
         <%= n %>
-      </a>
+      </.link>
     <% end %>
   </div>
 
@@ -73,17 +70,19 @@
     </div>
 
     <div class="gap-3 col-span-2 mr-2 flex justify-end">
-      <.icon
-        name="hero-list-bullet-solid"
-        class="w-6 h-6 hover:cursor-pointer"
-        phx-click="switch_view"
-      />
-      <.icon
-        name="hero-backward-solid"
-        class="w-6 h-8 hover:cursor-pointer"
-        phx-click="quiz_prev"
-      />
-      <.icon name="hero-forward-solid" class="w-6 h-8 hover:cursor-pointer" phx-click="quiz_next" />
+      <button phx-click="switch_view">
+        <.icon name="hero-list-bullet-solid" class="w-6 h-8 hover:cursor-pointer" />
+      </button>
+      <button>
+        <.link patch={if @quiz.num > 1, do: ~p"/quiz?num=#{@quiz.num - 1}", else: ""}>
+          <.icon name="hero-backward-solid" class="w-6 h-8 hover:cursor-pointer" />
+        </.link>
+      </button>
+      <button>
+        <.link patch={if @quiz.num < 30, do: ~p"/quiz?num=#{@quiz.num + 1}", else: ""}>
+          <.icon name="hero-forward-solid" class="w-6 h-8 hover:cursor-pointer" />
+        </.link>
+      </button>
     </div>
   </div>
 
@@ -121,7 +120,7 @@
 </.modal>
 
 <%= if @audio do %>
-  <audio controls autoplay hidden>
+  <audio controls autoplay>
     <source src={@audio} type="audio/mp3" />
   </audio>
 <% end %>

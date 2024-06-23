@@ -21,7 +21,6 @@ defmodule PentoWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    live "/guess", WrongLive
   end
 
   # Other scopes may use custom stacks.
@@ -36,12 +35,9 @@ defmodule PentoWeb.Router do
     # If your application does not have an admins-only section yet,
     # you can use Plug.BasicAuth to set up some basic authentication
     # as long as you are also using SSL (which you should anyway).
-    import Phoenix.LiveDashboard.Router
 
     scope "/dev" do
       pipe_through :browser
-
-      live_dashboard "/dashboard", metrics: PentoWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
   end
@@ -77,6 +73,8 @@ defmodule PentoWeb.Router do
       live "/quizs/:id", QuizLive.Show, :show
       live "/quizs/:id/show/edit", QuizLive.Show, :edit
     end
+
+    resources "/posts", PostController, except: [:show, :index]
   end
 
   scope "/", PentoWeb do
@@ -90,5 +88,8 @@ defmodule PentoWeb.Router do
       live "/users/confirm", UserConfirmationInstructionsLive, :new
       live "/quiz", QuizLive
     end
+
+    get "/posts", PostController, :index
+    get "/posts/:id", PostController, :show
   end
 end

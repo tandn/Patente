@@ -16,8 +16,8 @@ defmodule PentoWeb.QuizComponent do
             <%= @quiz.num %>
           </span>
 
-          <div class="flex-col flex py-10 px-2 h-72 poppins-regular font-medium text-lg">
-            <p><%= @quiz.body %></p>
+          <div class="flex-col flex py-10 px-2 h-72 justify-center">
+            <p class="text-xl"><%= @quiz.body %></p>
             <.loader id="my_spinner" />
           </div>
           <span class="flex justify-end mx-2 gap-2 pb-4">

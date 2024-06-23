@@ -21,9 +21,8 @@ defmodule PentoWeb.QuizLive do
     {:ok,
      assign(socket,
        count: @time_in_sec,
-       current_num: 1,
        quizs: quizs,
-       quiz: current_quiz(quizs, 1),
+       quiz: hd(quizs),
        scores: %{},
        answers: %{},
        final: nil,
@@ -32,6 +31,18 @@ defmodule PentoWeb.QuizLive do
        translated: nil,
        audio: nil
      )}
+  end
+
+  def handle_params(%{"num" => num}, _uri, socket) do
+    num = String.to_integer(num)
+    quiz = current_quiz(socket.assigns.quizs, num, socket.assigns.quiz)
+
+    socket =
+      assign(socket,
+        quiz: quiz
+      )
+
+    {:noreply, socket}
   end
 
   def handle_params(_unsigned_params, _uri, socket) do
@@ -63,55 +74,6 @@ defmodule PentoWeb.QuizLive do
     {:noreply, assign(socket, switch_view: not socket.assigns.switch_view)}
   end
 
-  def handle_event("quiz_next", _unsigned_params, socket) do
-    current_num = socket.assigns.current_num
-
-    if current_num >= @number_of_quizs do
-      {:noreply, socket}
-    else
-      quizs = socket.assigns.quizs
-
-      {:noreply,
-       assign(socket,
-         quiz: current_quiz(quizs, current_num + 1),
-         current_num: current_num + 1
-       )}
-    end
-  end
-
-  def handle_event("quiz_select", %{"num" => num}, socket) do
-    current_num = socket.assigns.current_num
-    num = num |> String.to_integer()
-
-    if current_num == num do
-      {:noreply, socket}
-    else
-      quizs = socket.assigns.quizs
-
-      {:noreply,
-       assign(socket,
-         quiz: current_quiz(quizs, num),
-         current_num: num
-       )}
-    end
-  end
-
-  def handle_event("quiz_prev", _unsigned_params, socket) do
-    current_num = socket.assigns.current_num
-
-    if current_num <= 1 do
-      {:noreply, socket}
-    else
-      quizs = socket.assigns.quizs
-
-      {:noreply,
-       assign(socket,
-         quiz: current_quiz(quizs, current_num - 1),
-         current_num: current_num - 1
-       )}
-    end
-  end
-
   def handle_event("quiz_explain", _unsigned_params, socket) do
     :erlang.cancel_timer(socket.assigns.tref)
     {:noreply, assign(socket, final: socket.assigns.scores |> Map.values() |> Enum.sum())}
@@ -128,16 +90,23 @@ defmodule PentoWeb.QuizLive do
     quiz_id = socket.assigns.quiz.id
     file_path = local_file_path(quiz_id)
 
-    if File.exists?(file_path) do
-      {:noreply, assign(socket, audio: ~p"/audio/#{audio_file_name(quiz_id)}")}
-    else
-      send(self(), :run_audio_request)
-      socket = push_event(socket, "js-exec", %{to: "#my_spinner", attr: "data-wait"})
-      {:noreply, socket}
+    cond do
+      File.exists?(file_path) && socket.assigns.audio ->
+        {:noreply, push_patch(socket, to: ~p"/quiz")}
+
+      File.exists?(file_path) ->
+        {:noreply, assign(socket, audio: ~p"/audio/#{audio_file_name(quiz_id)}")}
+
+      true ->
+        send(self(), :run_audio_request)
+        socket = push_event(socket, "js-exec", %{to: "#my_spinner", attr: "data-wait"})
+        {:noreply, socket}
     end
   end
 
   def handle_info(:run_audio_request, socket) do
+    require Logger
+    Logger.info("run audio request")
     audio = get_audio(socket.assigns.quiz.body)
     quiz_id = socket.assigns.quiz.id
     file_path = local_file_path(quiz_id)
@@ -213,8 +182,9 @@ defmodule PentoWeb.QuizLive do
         output_format: "mp3"
       })
 
-    with {:ok, %HTTPoison.Response{status_code: 200, body: audio}} <-
+    with {:ok, %HTTPoison.Response{status_code: 200, body: audio} = resp} <-
            HTTPoison.post(url, body, headers) do
+      IO.inspect(resp)
       audio
     else
       err ->
@@ -227,8 +197,12 @@ defmodule PentoWeb.QuizLive do
   defp point("falso", false), do: 1
   defp point(_, _), do: 0
 
-  defp current_quiz(quizs, quiz_id) do
-    quizs |> Enum.at(quiz_id - 1)
+  defp current_quiz(quizs, quiz_num, _quiz) when quiz_num >= 1 and quiz_num <= 30 do
+    quizs |> Enum.at(quiz_num - 1)
+  end
+
+  defp current_quiz(_quizs, _quiz_id, quiz) do
+    quiz
   end
 
   def format_timer(count) do

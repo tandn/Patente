@@ -21,6 +21,12 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
+import * as AudioMp3 from "./hooks/audio_mp3"
+
+// If you add more hooks, you can join them into the hooks object with `Object.assign`
+let Hooks = Object.assign({},
+  AudioMp3.hooks
+)
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
@@ -39,6 +45,7 @@ window.addEventListener("phx:js-exec", ({detail}) => {
       liveSocket.execJS(el, el.getAttribute(detail.attr))
   })
 })
+
 
 // connect if there are any LiveViews on the page
 liveSocket.connect()

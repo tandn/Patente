@@ -2,9 +2,18 @@ defmodule PentoWeb.QuizLive.FormComponent do
   use PentoWeb, :live_component
 
   alias Pento.Catalog
+  alias Pento.Catalog.Quiz
 
   @impl true
   def mount(socket) do
+    socket =
+      allow_upload(
+        socket,
+        :image,
+        accept: ~w(.png .jpeg .jpg),
+        max_file_size: 10_000_000
+      )
+
     {:ok, assign(socket, topics: Catalog.list_topics())}
   end
 
@@ -26,6 +35,31 @@ defmodule PentoWeb.QuizLive.FormComponent do
       >
         <.input field={@form[:body]} type="textarea" label="Quiz" />
         <.input field={@form[:image]} type="text" label="Image URL" />
+        <div class="text-gray-500 text-sm">
+          <.live_file_input upload={@uploads.image} />
+          <span class="block">Add up to <%= @uploads.image.max_entries %> images
+            (max <%= trunc(@uploads.image.max_file_size / 1_000_000) %> MB)</span>
+        </div>
+        <%= for entry <- @uploads.image.entries do %>
+          <.live_img_preview entry={entry} width="75" />
+          <div class="flex justify-between items-center">
+            <div class="w-full border bg-gray-100 ">
+              <span class="border text-xs bg-blue-100 py-1" style={"width=#{entry.progress}%"}>
+                <%= entry.progress %>%
+              </span>
+            </div>
+            <a
+              href="#"
+              class="text-2xl"
+              phx-click="cancel-upload"
+              phx-target={@myself}
+              phx-value-ref={entry.ref}
+            >
+              &times;
+            </a>
+          </div>
+        <% end %>
+        <!--.button class="w-full" phx-disable-with="Uploading...">Upload</.button-->
         <.input
           field={@form[:solution]}
           type="select"
@@ -75,7 +109,17 @@ defmodule PentoWeb.QuizLive.FormComponent do
     save_quiz(socket, socket.assigns.action, quiz_params)
   end
 
+  def handle_event("cancel-upload", %{"ref" => ref}, socket) do
+    {:noreply, cancel_upload(socket, :image, ref)}
+  end
+
   defp save_quiz(socket, :edit, quiz_params) do
+    quiz_params =
+      case consume_uploaded(socket) do
+        [] -> quiz_params
+        [url] -> %{quiz_params | "image" => url}
+      end
+
     case Catalog.update_quiz(socket.assigns.quiz, quiz_params) do
       {:ok, quiz} ->
         notify_parent({:saved, quiz})
@@ -91,7 +135,10 @@ defmodule PentoWeb.QuizLive.FormComponent do
   end
 
   defp save_quiz(socket, :new, quiz_params) do
-    case Catalog.create_quiz(quiz_params) do
+    [image_url] = consume_uploaded(socket)
+    quiz = %Quiz{image: image_url}
+
+    case Catalog.update_quiz(quiz, quiz_params) do
       {:ok, quiz} ->
         notify_parent({:saved, quiz})
 
@@ -113,5 +160,18 @@ defmodule PentoWeb.QuizLive.FormComponent do
 
   defp topic_select_options(topics) do
     for topic <- topics, do: {topic.name, topic.id}
+  end
+
+  defp consume_uploaded(socket) do
+    consume_uploaded_entries(socket, :image, fn meta, entry ->
+      dest = Path.join("priv/static/uploads", filename(entry))
+      File.cp!(meta.path, dest)
+      {:ok, ~p"/uploads/#{filename(entry)}"}
+    end)
+  end
+
+  defp filename(entry) do
+    [ext | _] = MIME.extensions(entry.client_type)
+    "#{entry.uuid}.#{ext}"
   end
 end

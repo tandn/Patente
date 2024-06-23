@@ -8,6 +8,7 @@ defmodule Pento.Repo.Migrations.CreateQuizs do
       add :explanation, :text
       add :image, :string
       add :solution, :boolean, default: false, null: false
+      add :topic_id, references(:topics, on_delete: :nothing)
 
       timestamps(type: :utc_datetime)
     end
